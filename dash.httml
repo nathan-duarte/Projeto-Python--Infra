@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Monitoramento</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    canvas {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Dashboard de Monitoramento</h1>
+  <div class="container">
+    <canvas id="cpuChart"></canvas>
+    <canvas id="memoryChart"></canvas>
+    <canvas id="diskChart"></canvas>
+    <canvas id="netChart"></canvas>
+  </div>
+
+  <script>
+    // Criação dos gráficos
+    const cpuChart = new Chart(document.getElementById("cpuChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Uso", "Livre"],
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: ["#ff3d67", "#e0e0e0"]
+        }]
+      },
+      options: { plugins: { title: { display: true, text: "CPU (%)" } } }
+    });
+
+    const memoryChart = new Chart(document.getElementById("memoryChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Uso", "Livre"],
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: ["#36a2eb", "#e0e0e0"]
+        }]
+      },
+      options: { plugins: { title: { display: true, text: "Memória (%)" } } }
+    });
+
+    const diskChart = new Chart(document.getElementById("diskChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Uso", "Livre"],
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: ["#ffce56", "#e0e0e0"]
+        }]
+      },
+      options: { plugins: { title: { display: true, text: "Disco (%)" } } }
+    });
+
+    const netChart = new Chart(document.getElementById("netChart"), {
+      type: "bar",
+      data: {
+        labels: ["Enviados (B/s)", "Recebidos (B/s)"],
+        datasets: [{
+          label: "Rede",
+          data: [0, 0],
+          backgroundColor: ["#4caf50", "#9c27b0"]
+        }]
+      },
+      options: { plugins: { title: { display: true, text: "Tráfego de Rede" } } }
+    });
+
+    // Função para buscar dados da API Python (baseada no seu script)
+    async function fetchMetrics() {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/metrics"); // <-- precisa do backend em Flask
+        const data = await response.json();
+
+        // Atualiza gráficos
+        cpuChart.data.datasets[0].data = [data.cpu_percent, 100 - data.cpu_percent];
+        memoryChart.data.datasets[0].data = [data.memory_percent, 100 - data.memory_percent];
+        diskChart.data.datasets[0].data = [data.disk_percent, 100 - data.disk_percent];
+        netChart.data.datasets[0].data = [data.net_sent, data.net_recv];
+
+        cpuChart.update();
+        memoryChart.update();
+        diskChart.update();
+        netChart.update();
+      } catch (err) {
+        console.error("Erro ao buscar métricas:", err);
+      }
+    }
+
+    // Atualiza a cada 3 segundos
+    setInterval(fetchMetrics, 3000);
+  </script>
+</body>
+</html>
